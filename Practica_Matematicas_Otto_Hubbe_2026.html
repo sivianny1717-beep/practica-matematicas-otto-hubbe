@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Escuela Otto Hübbe — Práctica de Matemáticas</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--accent:#3157d5;--ok:#16834b;--bad:#c0392b;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:var(--ink)}
+.wrap{max-width:900px;margin:auto;padding:20px} .cover,.card{background:var(--card);border-radius:22px;box-shadow:0 8px 28px #00000012}
+.cover{padding:38px 28px;text-align:center;margin:18px 0} .cover h1{margin:5px 0;font-size:clamp(28px,5vw,44px)} .cover h2{font-weight:500;color:var(--accent);margin:8px 0 18px}
+.badge{display:inline-block;background:#e9efff;color:#2847a5;padding:8px 14px;border-radius:999px;font-weight:700}
+.instructions{text-align:left;max-width:680px;margin:22px auto 0;line-height:1.55}
+button{border:0;border-radius:13px;padding:13px 20px;font-size:16px;font-weight:700;cursor:pointer}
+.primary{background:var(--accent);color:#fff} .secondary{background:#eef1f6;color:var(--ink)}
+.top{position:sticky;top:0;z-index:5;background:rgba(244,247,251,.95);backdrop-filter:blur(8px);padding:10px 0}
+.stats{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.score{font-size:20px;font-weight:800} .progress{height:10px;background:#dde3ee;border-radius:99px;overflow:hidden;margin-top:9px}
+.bar{height:100%;background:var(--accent);width:0;transition:width .25s}
+.card{padding:25px;margin-top:16px} .meta{color:var(--accent);font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+.qnum{color:var(--muted);font-size:14px;margin-top:5px} .question{font-size:24px;line-height:1.35;margin:18px 0}
+.option{display:block;width:100%;text-align:left;margin:10px 0;background:#f8f9fc;border:2px solid #e2e6ef;color:var(--ink);font-weight:600}
+.option:hover{border-color:#9eace0;background:#f2f5ff} .option:disabled{cursor:default}
+.feedback{margin-top:18px;padding:18px;border-radius:16px;line-height:1.5;display:none}
+.feedback.ok{display:block;background:#eaf8f0;border:1px solid #b8e5ca} .feedback.bad{display:block;background:#fff0ee;border:1px solid #f0c0ba}
+.feedback strong{display:block;font-size:18px;margin-bottom:5px} .next{margin-top:15px}
+.hidden{display:none!important} .result{text-align:center} .bigscore{font-size:56px;font-weight:900;color:var(--accent)}
+.breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;text-align:left;margin:22px 0}
+.breakdown div{background:#f7f8fb;padding:13px;border-radius:12px} .note{color:var(--muted);font-size:13px;line-height:1.45;margin-top:18px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:25px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="cover" id="cover">
+  <div class="badge">6.º año • 60 ítems</div>
+  <h1>Escuela Otto Hübbe</h1>
+  <h2>Práctica de Matemáticas</h2>
+  <h3>Prueba Nacional Estandarizada 2026</h3>
+  <div class="instructions">
+    <p><b>¿Cómo funciona?</b></p>
+    <ul>
+      <li>Encontrarás 60 preguntas de selección única con cuatro opciones.</li>
+      <li>Cada respuesta correcta suma <b>1 punto</b>.</li>
+      <li>Al responder, recibirás retroalimentación inmediata: si aciertas, se explica por qué; si fallas, se indica la respuesta correcta y se explica el procedimiento.</li>
+      <li>El puntaje se actualiza durante toda la práctica.</li>
+    </ul>
+  </div>
+  <button class="primary" onclick="startQuiz()">Comenzar práctica</button>
+</section>
+
+<section id="quiz" class="hidden">
+  <div class="top">
+    <div class="stats">
+      <div><b id="counter">Pregunta 1 de 60</b></div>
+      <div class="score">Puntos: <span id="score">0</span> / 60</div>
+    </div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+  </div>
+  <div class="card">
+    <div class="meta" id="block"></div>
+    <div class="qnum" id="qnum"></div>
+    <div class="question" id="question"></div>
+    <div id="options"></div>
+    <div id="feedback" class="feedback"></div>
+    <button id="next" class="primary next hidden" onclick="nextQuestion()">Siguiente pregunta</button>
+  </div>
+</section>
+
+<section id="result" class="card result hidden">
+  <h1>¡Práctica terminada! 🎉</h1>
+  <div class="bigscore"><span id="finalScore">0</span>/60</div>
+  <h2 id="finalMsg"></h2>
+  <div class="breakdown" id="breakdown"></div>
+  <button class="primary" onclick="restart()">Intentar de nuevo</button>
+  <p class="note">Esta práctica fue elaborada tomando como referencia la tabla de especificaciones de Matemáticas Primaria 2026 del MEP y el estilo general de sus ítems de práctica. No reproduce literalmente los ítems oficiales.</p>
+</section>
+<footer>Escuela Otto Hübbe • Práctica de Matemáticas • 2026</footer>
+</div>
+
+<script>
+const questions = [{"block": "Números", "q": "El número 456 320 se puede representar como:", "opts": ["400 000 + 50 000 + 6 000 + 300 + 20", "400 000 + 5 000 + 600 + 30 + 2", "40 000 + 500 000 + 6 000 + 300 + 20", "400 000 + 50 000 + 600 + 30 + 2"], "ans": 0, "exp": "Se descompone según el valor posicional: 400 000 + 50 000 + 6 000 + 300 + 20."}, {"block": "Números", "q": "¿Cuál número es mayor?", "opts": ["0,5078", "0,5708", "0,0578", "0,507"], "ans": 1, "exp": "Al comparar las cifras desde las décimas, 0,5708 es el mayor."}, {"block": "Números", "q": "¿Cuál es la notación desarrollada de 3,2045?", "opts": ["3 + 2/10 + 4/1000 + 5/10000", "3 + 2/10 + 4/100 + 5/10000", "3 + 2/100 + 4/1000 + 5/10000", "30 + 2/10 + 4/100 + 5/1000"], "ans": 0, "exp": "3,2045 = 3 + 2/10 + 0/100 + 4/1000 + 5/10000."}, {"block": "Números", "q": "¿Cuál expresión representa 7 × 10⁴ + 2 × 10² + 5?", "opts": ["70 205", "70 025", "72 005", "70 250"], "ans": 0, "exp": "7 × 10⁴ = 70 000; 2 × 10² = 200; más 5 da 70 205."}, {"block": "Números", "q": "¿Cuál de estos números es divisible por 3?", "opts": ["124", "215", "327", "410"], "ans": 2, "exp": "La suma de las cifras de 327 es 12, y 12 es múltiplo de 3."}, {"block": "Números", "q": "¿Cuál número es primo?", "opts": ["21", "29", "35", "51"], "ans": 1, "exp": "29 solo tiene como divisores positivos 1 y 29."}, {"block": "Números", "q": "¿Cuál es el resultado de 48 600 ÷ 100?", "opts": ["486", "4 860", "48,6", "4860"], "ans": 0, "exp": "Dividir entre 100 desplaza la coma dos lugares a la izquierda: 486."}, {"block": "Números", "q": "Una tienda recibe 8 cajas con 125 lápices cada una. ¿Cuántos lápices recibe?", "opts": ["1 000", "900", "1 250", "10 000"], "ans": 0, "exp": "8 × 125 = 1 000 lápices."}, {"block": "Números", "q": "¿Cuál es el resultado de 24 + 6 × 5?", "opts": ["150", "54", "30", "120"], "ans": 1, "exp": "Primero se multiplica: 6 × 5 = 30; luego 24 + 30 = 54."}, {"block": "Números", "q": "¿Cuál es el resultado de 3,6 × 1000?", "opts": ["36", "360", "3 600", "0,0036"], "ans": 2, "exp": "Multiplicar por 1000 desplaza la coma tres lugares a la derecha: 3 600."}, {"block": "Números", "q": "¿Cuál es el resultado de 72,5 ÷ 10?", "opts": ["725", "7,25", "0,725", "72,05"], "ans": 1, "exp": "Dividir entre 10 desplaza la coma un lugar a la izquierda."}, {"block": "Números", "q": "¿Cuál fracción es equivalente a 3/4?", "opts": ["6/8", "5/8", "9/16", "12/20"], "ans": 0, "exp": "Multiplicar numerador y denominador por 2 produce 6/8."}, {"block": "Números", "q": "¿Cuál es 2/3 + 1/6?", "opts": ["3/9", "1/2", "5/6", "3/6"], "ans": 2, "exp": "2/3 = 4/6; entonces 4/6 + 1/6 = 5/6."}, {"block": "Números", "q": "¿Cuál es 3/5 × 10/9?", "opts": ["30/45 = 2/3", "13/14", "6/45", "30/14"], "ans": 0, "exp": "3×10/(5×9)=30/45=2/3."}, {"block": "Números", "q": "¿Cuál es el inverso multiplicativo de 4/7?", "opts": ["4/7", "7/4", "−7/4", "1/4"], "ans": 1, "exp": "El inverso multiplicativo se obtiene intercambiando numerador y denominador: 7/4."}, {"block": "Números", "q": "¿Cuál número mixto equivale a 11/4?", "opts": ["2 3/4", "3 1/4", "2 1/4", "4 3/4"], "ans": 0, "exp": "11 ÷ 4 = 2 y sobra 3; por eso 11/4 = 2 3/4."}, {"block": "Números", "q": "¿Cuál es 5/6 − 1/4?", "opts": ["1/2", "7/12", "4/10", "2/12"], "ans": 1, "exp": "El mínimo común denominador es 12: 10/12 − 3/12 = 7/12."}, {"block": "Números", "q": "¿Cuál potencia representa 5 × 5 × 5 × 5?", "opts": ["4⁵", "5⁴", "20²", "5⁵"], "ans": 1, "exp": "Hay cuatro factores iguales a 5, por eso es 5⁴."}, {"block": "Geometría", "q": "En un triángulo, ¿cómo se llama el segmento perpendicular desde un vértice hasta la recta que contiene al lado opuesto?", "opts": ["Diagonal", "Altura", "Radio", "Cuerda"], "ans": 1, "exp": "La altura es el segmento perpendicular desde un vértice al lado opuesto o su prolongación."}, {"block": "Geometría", "q": "¿Cuál figura tiene cuatro lados iguales y cuatro ángulos rectos?", "opts": ["Rombo", "Rectángulo", "Cuadrado", "Trapecio"], "ans": 2, "exp": "El cuadrado tiene cuatro lados iguales y cuatro ángulos rectos."}, {"block": "Geometría", "q": "Un triángulo tiene lados de 6 cm, 6 cm y 9 cm. ¿Cómo se clasifica según sus lados?", "opts": ["Equilátero", "Isósceles", "Escaleno", "Rectángulo"], "ans": 1, "exp": "Tiene dos lados de igual medida, por lo que es isósceles."}, {"block": "Geometría", "q": "Un triángulo con ángulos de 90°, 45° y 45° es:", "opts": ["Acutángulo", "Obtusángulo", "Rectángulo", "Equilátero"], "ans": 2, "exp": "Tiene un ángulo de 90°, por lo que es rectángulo."}, {"block": "Geometría", "q": "¿Cuál de los siguientes es un paralelogramo?", "opts": ["Trapecio", "Romboide", "Trapezoide", "Pentágono"], "ans": 1, "exp": "El romboide tiene dos pares de lados paralelos."}, {"block": "Geometría", "q": "En una circunferencia, el segmento que une el centro con un punto de la circunferencia se llama:", "opts": ["Diámetro", "Radio", "Cuerda", "Apotema"], "ans": 1, "exp": "El radio une el centro con un punto de la circunferencia."}, {"block": "Geometría", "q": "¿Cuál es el diámetro de una circunferencia cuyo radio mide 7 cm?", "opts": ["3,5 cm", "7 cm", "14 cm", "49 cm"], "ans": 2, "exp": "El diámetro es el doble del radio: 2 × 7 = 14 cm."}, {"block": "Geometría", "q": "¿Cuál objeto tiene forma aproximada de prisma rectangular?", "opts": ["Una pelota", "Una caja de zapatos", "Una moneda", "Un cono de helado"], "ans": 1, "exp": "Una caja de zapatos tiene caras rectangulares y forma de prisma rectangular."}, {"block": "Geometría", "q": "Un cubo tiene aristas de 4 cm. ¿Cuál es su volumen?", "opts": ["12 cm³", "16 cm³", "64 cm³", "48 cm³"], "ans": 2, "exp": "El volumen del cubo es lado³: 4 × 4 × 4 = 64 cm³."}, {"block": "Geometría", "q": "Un rectángulo mide 12 m de largo y 5 m de ancho. ¿Cuál es su perímetro?", "opts": ["17 m", "34 m", "60 m", "24 m"], "ans": 1, "exp": "P = 2(12+5)=34 m."}, {"block": "Geometría", "q": "¿Cuál es el área de un triángulo con base 10 cm y altura 6 cm?", "opts": ["60 cm²", "30 cm²", "16 cm²", "40 cm²"], "ans": 1, "exp": "Área = (base × altura)/2 = (10×6)/2 = 30 cm²."}, {"block": "Geometría", "q": "Un cuadrado tiene un lado de 9 cm. ¿Cuál es su área?", "opts": ["18 cm²", "36 cm²", "81 cm²", "90 cm²"], "ans": 2, "exp": "Área = lado² = 9 × 9 = 81 cm²."}, {"block": "Geometría", "q": "¿Cuál punto está en el primer cuadrante del plano cartesiano?", "opts": ["(−2, 4)", "(3, −1)", "(0, 5)", "(4, 2)"], "ans": 3, "exp": "En el primer cuadrante, ambas coordenadas son positivas: (4, 2)."}, {"block": "Geometría", "q": "Una figura se mueve 3 unidades a la derecha y 2 hacia arriba sin cambiar su forma. Este movimiento es una:", "opts": ["Rotación", "Traslación", "Reflexión", "Ampliación"], "ans": 1, "exp": "Una traslación desplaza una figura sin cambiar su forma ni su tamaño."}, {"block": "Geometría", "q": "¿Cuál figura tiene exactamente una línea de simetría?", "opts": ["Un cuadrado", "Un círculo", "Un triángulo equilátero", "Un triángulo isósceles no equilátero"], "ans": 3, "exp": "Un triángulo isósceles no equilátero tiene una línea de simetría."}, {"block": "Medidas", "q": "¿Cuántos centímetros hay en 3,5 metros?", "opts": ["35 cm", "350 cm", "3 500 cm", "0,35 cm"], "ans": 1, "exp": "1 m = 100 cm; 3,5 × 100 = 350 cm."}, {"block": "Medidas", "q": "¿Cuántos litros equivalen a 4 dm³?", "opts": ["0,4 L", "4 L", "40 L", "400 L"], "ans": 1, "exp": "1 dm³ equivale a 1 litro; por tanto 4 dm³ = 4 L."}, {"block": "Medidas", "q": "¿Cuántos segundos hay en 3 minutos?", "opts": ["60", "120", "180", "300"], "ans": 2, "exp": "3 × 60 = 180 segundos."}, {"block": "Medidas", "q": "Una actividad inicia a las 8:35 a. m. y termina a las 10:05 a. m. ¿Cuánto dura?", "opts": ["1 h 20 min", "1 h 30 min", "2 h 30 min", "1 h 40 min"], "ans": 1, "exp": "De 8:35 a 9:35 hay 1 hora y de 9:35 a 10:05 hay 30 minutos."}, {"block": "Medidas", "q": "¿Cuántos metros cuadrados son 2 m²?", "opts": ["20 cm²", "200 cm²", "20 000 cm²", "200 000 cm²"], "ans": 2, "exp": "1 m² = 10 000 cm²; 2 m² = 20 000 cm²."}, {"block": "Medidas", "q": "Si una temperatura es 20 °C, ¿cuál es aproximadamente su valor en °F usando F = (C × 9/5) + 32?", "opts": ["36 °F", "52 °F", "68 °F", "72 °F"], "ans": 2, "exp": "(20 × 9/5)+32 = 36+32 = 68 °F."}, {"block": "Medidas", "q": "Una botella contiene 2,5 litros. ¿Cuántos mililitros contiene?", "opts": ["25 mL", "250 mL", "2 500 mL", "25 000 mL"], "ans": 2, "exp": "1 L = 1000 mL; 2,5 L = 2500 mL."}, {"block": "Medidas", "q": "Una bolsa pesa 3,2 kg. ¿Cuántos gramos pesa?", "opts": ["32 g", "320 g", "3 200 g", "32 000 g"], "ans": 2, "exp": "1 kg = 1000 g; 3,2 kg = 3200 g."}, {"block": "Relaciones y Álgebra", "q": "Observa la sucesión: 7, 14, 21, 28, __. ¿Qué número sigue?", "opts": ["30", "32", "35", "42"], "ans": 2, "exp": "La sucesión aumenta de 7 en 7; 28 + 7 = 35."}, {"block": "Relaciones y Álgebra", "q": "En una tabla, cada vez que x aumenta 1, y aumenta 4. Si x=3 corresponde a y=12, ¿qué valor tendrá y cuando x=5?", "opts": ["16", "20", "24", "15"], "ans": 1, "exp": "La relación es y=4x; para x=5, y=20."}, {"block": "Relaciones y Álgebra", "q": "¿Cuál cantidad es constante en la situación: “Una entrada cuesta ₡1 500 y se compran varias entradas”?", "opts": ["El número de entradas", "El costo total", "El precio de una entrada", "La cantidad de personas"], "ans": 2, "exp": "El precio de una entrada se mantiene fijo: ₡1 500."}, {"block": "Relaciones y Álgebra", "q": "Si 3 cuadernos cuestan ₡2 400, ¿cuánto cuestan 6 cuadernos al mismo precio?", "opts": ["₡3 600", "₡4 800", "₡6 000", "₡7 200"], "ans": 1, "exp": "6 es el doble de 3, por lo que el costo también se duplica: ₡4 800."}, {"block": "Relaciones y Álgebra", "q": "Completa: 5 × □ = 45", "opts": ["5", "8", "9", "10"], "ans": 2, "exp": "45 ÷ 5 = 9."}, {"block": "Relaciones y Álgebra", "q": "Si x + 18 = 43, ¿cuál es el valor de x?", "opts": ["21", "25", "61", "35"], "ans": 1, "exp": "x = 43 − 18 = 25."}, {"block": "Relaciones y Álgebra", "q": "Si 3x = 27, ¿cuál es el valor de x?", "opts": ["6", "8", "9", "12"], "ans": 2, "exp": "x = 27 ÷ 3 = 9."}, {"block": "Relaciones y Álgebra", "q": "¿Cuál valor hace verdadera la desigualdad x + 4 < 10?", "opts": ["8", "7", "5", "10"], "ans": 2, "exp": "Con x=5, 5+4=9 y 9 es menor que 10."}, {"block": "Relaciones y Álgebra", "q": "El 25% de 200 estudiantes corresponde a:", "opts": ["25", "40", "50", "75"], "ans": 2, "exp": "25% = 25/100 = 1/4; 200 ÷ 4 = 50."}, {"block": "Relaciones y Álgebra", "q": "Si 4 cuadernos cuestan ₡2 000, ¿cuánto cuestan 10 cuadernos al mismo precio por unidad?", "opts": ["₡4 000", "₡5 000", "₡6 000", "₡8 000"], "ans": 1, "exp": "Cada cuaderno cuesta ₡500; 10 × 500 = ₡5 000."}, {"block": "Relaciones y Álgebra", "q": "En un mapa, 1 cm representa 5 km. Si una distancia mide 7 cm en el mapa, ¿cuántos kilómetros representa?", "opts": ["12 km", "25 km", "35 km", "40 km"], "ans": 2, "exp": "7 × 5 = 35 km."}, {"block": "Relaciones y Álgebra", "q": "Una receta para 4 personas usa 3 tazas de arroz. Para 8 personas se necesita:", "opts": ["3 tazas", "4 tazas", "6 tazas", "12 tazas"], "ans": 2, "exp": "8 es el doble de 4, por lo que se duplican las 3 tazas: 6."}, {"block": "Estadística y Probabilidad", "q": "Las edades de un grupo son 10, 12, 12, 13 y 15. ¿Cuál es la moda?", "opts": ["10", "12", "13", "15"], "ans": 1, "exp": "La moda es el dato que más se repite: 12."}, {"block": "Estadística y Probabilidad", "q": "¿Cuál es la media de 6, 8, 10 y 12?", "opts": ["8", "9", "10", "36"], "ans": 1, "exp": "(6+8+10+12) ÷ 4 = 36 ÷ 4 = 9."}, {"block": "Estadística y Probabilidad", "q": "Los datos son 4, 7, 9, 12 y 15. ¿Cuál es el recorrido?", "opts": ["8", "9", "11", "19"], "ans": 2, "exp": "Recorrido = máximo − mínimo = 15 − 4 = 11."}, {"block": "Estadística y Probabilidad", "q": "En una bolsa hay 3 bolas rojas y 1 azul. Al sacar una bola sin mirar, ¿qué color es más probable obtener?", "opts": ["Azul", "Rojo", "Ambos son igualmente probables", "Ninguno"], "ans": 1, "exp": "Hay más bolas rojas (3 de 4), por lo que rojo es más probable."}, {"block": "Estadística y Probabilidad", "q": "Al lanzar un dado de seis caras, ¿cuántos resultados simples son favorables al evento “obtener un número par”?", "opts": ["2", "3", "4", "6"], "ans": 1, "exp": "Los resultados pares son 2, 4 y 6: tres resultados favorables."}, {"block": "Estadística y Probabilidad", "q": "Al lanzar una moneda, ¿cuál es la probabilidad de obtener cara?", "opts": ["0", "1/4", "1/2", "1"], "ans": 2, "exp": "Hay 1 resultado favorable de 2 posibles: 1/2."}, {"block": "Estadística y Probabilidad", "q": "En una caja hay 5 tarjetas numeradas del 1 al 5. ¿Cuál es la probabilidad de sacar una tarjeta con número mayor que 3?", "opts": ["1/5", "2/5", "3/5", "4/5"], "ans": 1, "exp": "Los resultados favorables son 4 y 5: 2 de 5, es decir, 2/5."}];
+let current=0, score=0, answered=false, results=[];
+const labels=["A","B","C","D"];
+
+function startQuiz(){
+  document.getElementById('cover').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  current=0; score=0; answered=false; results=[];
+  render();
+}
+function render(){
+  const q=questions[current];
+  document.getElementById('counter').textContent=`Pregunta ${current+1} de ${questions.length}`;
+  document.getElementById('score').textContent=score;
+  document.getElementById('bar').style.width=`${(current/questions.length)*100}%`;
+  document.getElementById('block').textContent=q.block;
+  document.getElementById('qnum').textContent=`Ítem ${current+1}`;
+  document.getElementById('question').textContent=q.q;
+  const opts=document.getElementById('options'); opts.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const b=document.createElement('button');
+    b.className='option';
+    b.innerHTML=`<b>${labels[i]}.</b> ${opt}`;
+    b.onclick=()=>answer(i);
+    opts.appendChild(b);
+  });
+  const fb=document.getElementById('feedback'); fb.className='feedback'; fb.innerHTML='';
+  document.getElementById('next').classList.add('hidden');
+  answered=false;
+}
+function answer(choice){
+  if(answered) return;
+  answered=true;
+  const q=questions[current], correct=choice===q.ans;
+  if(correct) score++;
+  results.push({block:q.block,correct});
+  document.getElementById('score').textContent=score;
+  document.querySelectorAll('.option').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.ans) b.style.borderColor='var(--ok)';
+    if(i===choice && !correct) b.style.borderColor='var(--bad)';
+  });
+  const fb=document.getElementById('feedback');
+  fb.className='feedback '+(correct?'ok':'bad');
+  fb.innerHTML=correct
+    ? `<strong>¡Excelente! ⭐ +1 punto</strong>Tu respuesta es correcta.<br>${q.exp}`
+    : `<strong>Vamos a revisarlo. 💡</strong>No sumas punto en este ítem.<br><b>Respuesta correcta: ${labels[q.ans]}. ${q.opts[q.ans]}</b><br>${q.exp}`;
+  document.getElementById('next').classList.remove('hidden');
+}
+function nextQuestion(){
+  if(current<questions.length-1){current++;render();window.scrollTo({top:0,behavior:'smooth'});}
+  else finish();
+}
+function finish(){
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+  document.getElementById('finalScore').textContent=score;
+  let msg=score>=54?'¡Excelente trabajo! 🌟':score>=45?'¡Muy buen trabajo! 👏':score>=36?'¡Buen esfuerzo! Sigue practicando. 💪':'¡Sigue adelante! Cada error es una oportunidad para aprender. 📚';
+  document.getElementById('finalMsg').textContent=msg;
+  const order=["Números","Geometría","Medidas","Relaciones y Álgebra","Estadística y Probabilidad"];
+  document.getElementById('breakdown').innerHTML=order.map(b=>{
+    const a=results.filter(x=>x.block===b), c=a.filter(x=>x.correct).length;
+    return `<div><b>${b}</b><br>${c} / ${a.length} correctas</div>`;
+  }).join('');
+  document.getElementById('bar').style.width='100%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function restart(){
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  current=0;score=0;results=[];render();
+}
+</script>
+</body>
+</html>
